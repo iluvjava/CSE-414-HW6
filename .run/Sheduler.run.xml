@@ -1,0 +1,28 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Sheduler" type="PythonConfigurationType" factoryName="Python">
+    <module name="CSE-414-HW6" />
+    <option name="INTERPRETER_OPTIONS" value="" />
+    <option name="PARENT_ENVS" value="true" />
+    <envs>
+      <env name="PYTHONUNBUFFERED" value="1" />
+      <env name="USERID" value="hongda" />
+      <env name="SERVER" value="cse414-hw3-server.database.windows.net" />
+      <env name="PASSWORD" value="12345Lei" />
+      <env name="DBNAME" value="cse414-hw3-db" />
+    </envs>
+    <option name="SDK_HOME" value="$USER_HOME$/opt/anaconda3/envs/cse414/bin/python" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/main/scheduler" />
+    <option name="IS_MODULE_SDK" value="false" />
+    <option name="ADD_CONTENT_ROOTS" value="true" />
+    <option name="ADD_SOURCE_ROOTS" value="true" />
+    <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/main/scheduler/Scheduler.py" />
+    <option name="PARAMETERS" value="" />
+    <option name="SHOW_COMMAND_LINE" value="false" />
+    <option name="EMULATE_TERMINAL" value="true" />
+    <option name="MODULE_MODE" value="false" />
+    <option name="REDIRECT_INPUT" value="false" />
+    <option name="INPUT_FILE" value="" />
+    <method v="2" />
+  </configuration>
+</component>
