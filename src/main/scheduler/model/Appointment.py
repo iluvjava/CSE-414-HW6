@@ -118,15 +118,20 @@ class Appointment:
         """
             Returns the query results for an instance of patient. The results will be returned as a list of
             dictionary.
+            Exceptions:
+                Responsibility of the callers.
+                * If current patient instance is None, it will raise an exception about it.
         """
-        return None
 
+        return None
 
     def show_appointment_caregiver(self):
         """
             Returns the query results for an instance of caregiver. The results will be returned as a list
             of dictionary.
-
+            Exceptions:
+                Responsibility of the callers:
+                * if current caregiver instance is None, it will rase an exception about it.
         """
 
         return None

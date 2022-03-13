@@ -43,8 +43,10 @@ class ConnectionManager:
 
     def __enter__(self):
         """
-            Enter If Block. Directly get the cursor for MSSQL under the with
+            Enter with Block. Directly get the cursor for MSSQL under the with
             context. It has auto commit.
+            * Under the contex, the query results are in dictionary format, and
+            auto-commit is enabled.
         """
         self.create_connection(autocommit=True)
         return self.conn.cursor(as_dict=True)
@@ -52,7 +54,7 @@ class ConnectionManager:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """
             Close it when existing the with block.
-            Error is the responsibility of the caller.
+            All errors and exceptions are the responsibility of the caller of the with context.
         """
         self.close_connection()
         return False
