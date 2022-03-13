@@ -5,6 +5,8 @@ from util.Util import Util
 from db.ConnectionManager import ConnectionManager
 import pymssql
 import datetime
+import warnings
+import traceback
 
 
 '''
@@ -18,9 +20,35 @@ CURRENT_CAREGIVER = None
 
 def create_patient(tokens):
     """
-    TODO: Part 1
+        Handles the command of creating a new patient in the database,
+        given the name and password for the patient.
     """
-    pass
+    if len(tokens) != 3:
+        print(f"Tokenization failed, expect 3 tokens, but got: {tokens}")
+        return  # wrong number of token
+    username = tokens[1]
+    password = tokens[2]
+
+    ThePatient = Patient(username, password=password)
+
+    try:
+        if ThePatient.exists_in_db():
+            print("Username already exists")
+            return  # account with the same name already exists.
+        salt = Util.generate_salt()
+        hash = Util.generate_hash(password, salt)
+        ThePatient.salt, ThePatient.hash = salt, hash
+        ThePatient.save_to_db()
+    except pymssql.Error as dbe:
+        print(dbe)
+        warnings.warn("Unable to save created patient to the database. ")
+        return None
+    except Exception as e:
+        traceback.print_exc()
+        warnings.warn("Exception occurred while saving the account created. ")
+        return None
+    print(" *** Patient's Account Registered. ***")
+    return
 
 
 def create_caregiver(tokens):
@@ -34,18 +62,14 @@ def create_caregiver(tokens):
         return
     username = tokens[1]
     password = tokens[2]
-
     # check 2: check if the username has been taken already
     if username_exists_caregiver(username):
         print("Username taken, try again!")
         return
-
     salt = Util.generate_salt()
     hash = Util.generate_hash(password, salt)
-
     # create the caregiver
     caregiver = Caregiver(username, salt=salt, hash=hash)
-
     # save to caregiver information to our database
     try:
         caregiver.save_to_db()
@@ -63,7 +87,6 @@ def username_exists_caregiver(username):
     cm = ConnectionManager()
     conn = cm.create_connection()
     select_username = "SELECT * FROM Caregivers WHERE Username = %s"
-
     try:
         cursor = conn.cursor(as_dict=True)
         cursor.execute(select_username, username)
@@ -83,9 +106,34 @@ def username_exists_caregiver(username):
 
 def login_patient(tokens):
     """
-    TODO: Part 1
+        accept tokens of the format:
+        login_patient <username> <password>
     """
-    pass
+    global CURRENT_PATIENT
+    if not(CURRENT_PATIENT is None and CURRENT_PATIENT is None):
+        if CURRENT_PATIENT is not None:
+            print(f"Can't login because {CURRENT_PATIENT} is currently logged in. ")
+        else:
+            print(f"Can't login because {CURRENT_CAREGIVER} is currently logged in. ")
+        return None
+    if len(tokens) != 3:
+        print(f"Tokenization failed, expect 3 tokens from the command input, but gotten: \n{tokens}")
+
+    username, password = tokens[1], tokens[2]
+    try:   # try logging in and store the session for the login.
+        ThePatient = Patient(username, password=password).get()
+        print(f"Current login patient: {username}")
+        CURRENT_PATIENT = ThePatient
+    except pymssql.Error as e:
+        traceback.print_exc()
+        print("An database error occured when trying to login the patient. ")
+        return None
+    except Exception as e:
+        traceback.print_exc()
+        print("Another non database error has occured while processing the login of the patient. ")
+        return None
+
+    return None
 
 
 def login_caregiver(tokens):
@@ -321,6 +369,13 @@ def start():
             print("Invalid Argument")
 
 
+
+def Test():
+    print("--- Test Creating Caregiver --- ")
+    print("Inserting a new care giver to the system. ")
+    create_caregiver(["", "test", "test"])
+    return
+
 if __name__ == "__main__":
     '''
     // pre-define the three types of authorized vaccines
@@ -329,6 +384,7 @@ if __name__ == "__main__":
     // and then construct a map of vaccineName -> vaccineObject
     '''
     # start command line
+    Test()
     print()
     print("Welcome to the COVID-19 Vaccine Reservation Scheduling Application!")
     start()

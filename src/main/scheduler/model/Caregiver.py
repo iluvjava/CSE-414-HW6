@@ -7,12 +7,20 @@ import pymssql
 
 
 class Caregiver:
+
     def __init__(self, username, password=None, salt=None, hash=None):
+        """
+            Create a caregiver instance for the current login.
+            Overview:
+                * Pass in the salt and hash when it's made to create an instance of caregiver in the
+                DB.
+                * Pass in the password if it's an login attempt of an existing caregiver in the database.
+
+        """
         self.username = username
         self.password = password
         self.salt = salt
         self.hash = hash
-
 
     def get(self):
         """
@@ -49,21 +57,21 @@ class Caregiver:
         return self.username
 
     @property
-    def username(self):
+    def Username(self):
         return self.get_username()
 
     def get_salt(self):
         return self.salt
 
     @property
-    def salt(self):
+    def Salt(self):
         return self.get_salt()
 
     def get_hash(self):
         return self.hash
 
     @property
-    def hash(self):
+    def Hash(self):
         return self.get_hash()
 
     def save_to_db(self):
@@ -99,3 +107,9 @@ class Caregiver:
             raise
         finally:
             cm.close_connection()
+
+    def __repr__(self):
+        """
+            print out an representation of the current instance for the caregiver.
+        """
+        return f"instance type: Caregiver, usename: {self.username}"

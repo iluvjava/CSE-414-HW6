@@ -5,7 +5,7 @@ CREATE TABLE Caregivers (
     PRIMARY KEY (Username)
 );
 
-CREATE TABLE Patient(
+CREATE TABLE Patients(
     Username varchar(255),
     Salt BINARY(16),
     Hash BINARY(16),
