@@ -3,12 +3,14 @@ import re
 from model.Vaccine import Vaccine
 from model.Caregiver import Caregiver
 from model.Patient import Patient
+from model.Appointment import Appointment
 from util.Util import Util
 from db.ConnectionManager import ConnectionManager
 import pymssql
 import datetime
 import warnings
 import traceback
+import datetime
 
 
 '''
@@ -19,9 +21,10 @@ Note: it is always true that at most one of currentCaregiver and currentPatient 
 CURRENT_PATIENT = None
 CURRENT_CAREGIVER = None
 
+# Used SQL Dry Statements.
 CONST_SELECT_CAREGIVER_USERNAME = "SELECT * FROM Caregivers WHERE Username = %s"
 CONST_GET_ALL_VACCINE = "SELECT * FROM Vaccines"
-CONST_SELECT_CAREGIVER_AVAILABLE_FOR_DATE = "SELECT * FROM Availabilities WHERE time = %s"
+CONST_SELECT_CAREGIVER_AVAILABLE_FOR_DATE = "SELECT * FROM Availabilities WHERE Time = %s"
 
 
 def create_patient(tokens):
@@ -179,28 +182,87 @@ def search_caregiver_schedule(tokens):
         * Output the username for the caregivers that are available for the date.
         * along with the number of available doses left for each vaccine.
     """
-    # TODO: Implement this.
+
     if len(tokens) != 2:
         print(f"Tokenization failed, except 2 tokens but we got: {tokens}")
         return None
     date = tokens[1]
-    if re.findall(r"^\d{4}-\d{2}-\d{2}", date) != 1:
-        print("Don't give that, date of in the formate of YYYY-MM-DD")
+    if len(re.findall(r"\d{4}-\d{1,2}-\d{1,2}", date)) != 1:
+        print(f"Don't give that, date should be in the formate of YYYY-MM-DD, but I got: {date}")
         return None
     if CURRENT_CAREGIVER is None and CURRENT_PATIENT is None:
         print("You haven't login, please login to retrieve schedule info. ")
         return None
-
-
-    pass
+    if not Util.CheckDateCorrect(date):
+        print("The date you pass in is not a valid date to search for. ")
+    cm = ConnectionManager()
+    try:
+        with cm as cursor:
+            cursor.execute(CONST_SELECT_CAREGIVER_AVAILABLE_FOR_DATE, (date, ))
+            print("------------------------------------------")
+            print(f"Caregivers Available for Date: {date}")
+            for row in cursor:
+                print(f"- {row['Username']}")
+            cursor.execute(CONST_GET_ALL_VACCINE)
+            print("------------------------------------------")
+            print("Vaccines         |  Dosages               ")
+            for row in cursor:
+                print(f"{row['Name']}  |  {row['Doses']}")
+    except pymssql.Error as sqle:
+        warnings.warn("SQL database exceptions when getting available schedules.")
+        traceback.print_exc()
+        return None
+    except Exception as e:
+        traceback.print_exc()
+        warnings.warn("Non SQL database exceptions when getting available schedules.")
+        return None
+    return None
 
 
 def reserve(tokens):
     """
+        1. Patient performs this operation.
+        2. Randomly assign a caregiver that is available at that given Date.
+        3. Output the assigned caregiver and the appointment ID.
         TODO: Part 2
     """
+    global CURRENT_PATIENT
+    if CURRENT_PATIENT is None:
+        print("Please login as a patient first. ")
+        return None
+    if len(tokens) != 3:
+        print(f"Expect 3 tokens: Commands, Vaccine, date, but we got: {tokens}")
+        return None
+    Vac, AppointmentDate = tokens[1], tokens[2]
 
-    pass
+    # validate appointment.
+    try:
+        TheAppointment = Appointment(Vac, AppointmentDate, patient_instance=CURRENT_PATIENT)
+        ValidationResults = TheAppointment.validate_appointment()
+        if ValidationResults is not None:   # appointment validations failed.
+            print(ValidationResults)
+            return None
+    except pymssql.Error as sqle:
+        traceback.print_exc()
+        print("A Database error has occurred when trying to validate the appointment.")
+        return None
+    except Exception as e:
+        traceback.print_exc()
+        print("A none database has occurred while trying to validate the appointment. ")
+        return None
+    # Add appointment:
+    try:
+        TheAppointment.add_appointment()
+    except pymssql.Error as sqle:
+        traceback.print_exc()
+        print("A database error has occured while trying to add the current appointment. ")
+        return None
+    except Exception as e:
+        traceback.print_exc()
+        print("A non database error has occured while trying to add the current appointment. ")
+        return None
+    print("***** Appointment Added ******")
+    return None
 
 
 def upload_availability(tokens):
@@ -225,6 +287,9 @@ def upload_availability(tokens):
     month = int(date_tokens[0])
     day = int(date_tokens[1])
     year = int(date_tokens[2])
+    if len(re.findall(r"\d{4}-\d{1,2}-\d{1,2}", date)) != 1:
+        print(f"Don't give that, date should be in the formate of YYYY-MM-DD, but I got: {date}")
+        return None
     try:
         d = datetime.datetime(year, month, day)
         CURRENT_CAREGIVER.upload_availability(d)
@@ -305,9 +370,15 @@ def add_doses(tokens):
 
 
 def show_appointments(tokens):
-    '''
+    """
+        Show info about appointment only for the current user.
+        * If user is a caregiver then:
+            you should print the appointment ID, vaccine name, date, and patient name.
+        * if the user is a patient then:
+            For patients, you should print the appointment ID, vaccine name, date, and caregiver name.
         TODO: Part 2
-    '''
+    """
+
     pass
 
 
@@ -316,10 +387,9 @@ def logout(tokens):
         TODO: Part 2
     """
     global CURRENT_CAREGIVER, CURRENT_PATIENT
-    print(f"Logging ou: {CURRENT_CAREGIVER}")
+    print(f"Logging out: {CURRENT_CAREGIVER}")
     print()
-
-    return
+    return None
 
 
 def start():

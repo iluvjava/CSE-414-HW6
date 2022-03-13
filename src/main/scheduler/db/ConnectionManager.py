@@ -27,6 +27,7 @@ class ConnectionManager:
                 warnings.warn("USERID Env Var is None.")
             if self.password is None:
                 warnings.warn("PASSWORD Env Var is None.")
+
             self.conn = pymssql.connect(
                 server=self.server_name,
                 user=self.user,
