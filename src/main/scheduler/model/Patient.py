@@ -60,7 +60,6 @@ class Patient:
                     return self
         return None
 
-
     def exists_in_db(self):
         """
             Check if the current establish instance of the logged in patient exists in the database we had.
@@ -122,7 +121,7 @@ class Patient:
         """
             Get representation for the instance.
         """
-        return f"type: Patient, username: {self.username}"
+        return f"Patient: {self.username}"
 
 
 

@@ -39,11 +39,9 @@ class Vaccine:
     def save_to_db(self):
         if self.available_doses is None or self.available_doses <= 0:
             raise ValueError("Argument cannot be negative!")
-
         cm = ConnectionManager()
         conn = cm.create_connection()
         cursor = conn.cursor()
-
         add_doses = "INSERT INTO VACCINES VALUES (%s, %d)"
         try:
             cursor.execute(add_doses, (self.vaccine_name, self.available_doses))

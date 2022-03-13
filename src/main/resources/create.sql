@@ -13,7 +13,7 @@ CREATE TABLE Patients(
 )
 
 CREATE TABLE Availabilities (
-    Time date,  -- date is a discrete time point.
+    Time DATE,  -- date is a discrete time point.
     Username varchar(255) REFERENCES Caregivers,
     PRIMARY KEY (Time, Username)
 );

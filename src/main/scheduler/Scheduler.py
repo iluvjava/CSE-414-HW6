@@ -1,3 +1,5 @@
+import re
+
 from model.Vaccine import Vaccine
 from model.Caregiver import Caregiver
 from model.Patient import Patient
@@ -17,6 +19,10 @@ Note: it is always true that at most one of currentCaregiver and currentPatient 
 CURRENT_PATIENT = None
 CURRENT_CAREGIVER = None
 
+CONST_SELECT_CAREGIVER_USERNAME = "SELECT * FROM Caregivers WHERE Username = %s"
+CONST_GET_ALL_VACCINE = "SELECT * FROM Vaccines"
+CONST_SELECT_CAREGIVER_AVAILABLE_FOR_DATE = "SELECT * FROM Availabilities WHERE time = %s"
+
 
 def create_patient(tokens):
     """
@@ -28,9 +34,7 @@ def create_patient(tokens):
         return  # wrong number of token
     username = tokens[1]
     password = tokens[2]
-
     ThePatient = Patient(username, password=password)
-
     try:
         if ThePatient.exists_in_db():
             print("Username already exists")
@@ -86,7 +90,7 @@ def create_caregiver(tokens):
 def username_exists_caregiver(username):
     cm = ConnectionManager()
     conn = cm.create_connection()
-    select_username = "SELECT * FROM Caregivers WHERE Username = %s"
+    select_username = CONST_SELECT_CAREGIVER_USERNAME
     try:
         cursor = conn.cursor(as_dict=True)
         cursor.execute(select_username, username)
@@ -118,7 +122,6 @@ def login_patient(tokens):
         return None
     if len(tokens) != 3:
         print(f"Tokenization failed, expect 3 tokens from the command input, but gotten: \n{tokens}")
-
     username, password = tokens[1], tokens[2]
     try:   # try logging in and store the session for the login.
         ThePatient = Patient(username, password=password).get()
@@ -132,7 +135,6 @@ def login_patient(tokens):
         traceback.print_exc()
         print("Another non database error has occured while processing the login of the patient. ")
         return None
-
     return None
 
 
@@ -140,21 +142,17 @@ def login_caregiver(tokens):
     """
         login_caregiver <username> <password>
     """
-
     # check 1: if someone's (caregiver or patient or whoever) already logged-in, they need to log out first
     global CURRENT_CAREGIVER
     if CURRENT_CAREGIVER is not None or CURRENT_PATIENT is not None:
         print("Already logged-in!")
         return
-
     # check 2: the length for tokens need to be exactly 3 to include all information (with the operation name)
     if len(tokens) != 3:
         print("Please try again!")
         return
-
     username = tokens[1]
     password = tokens[2]
-
     caregiver = None
     try:
         caregiver = Caregiver(username, password=password).get()
@@ -162,12 +160,10 @@ def login_caregiver(tokens):
         print("Login caregiver failed")
         print("Db-Error:", e)
         quit()
-
     except Exception as e:
         print("Error occurred when logging in. Please try again!")
         print("Error:", e)
         return
-
     # check if the login was successful
     if caregiver is None:
         print("Error occurred when logging in. Please try again!")
@@ -178,15 +174,32 @@ def login_caregiver(tokens):
 
 def search_caregiver_schedule(tokens):
     """
-    TODO: Part 2
+        Directly communicates with the database and pull out all the available caregivers for the given
+        date.
+        * Output the username for the caregivers that are available for the date.
+        * along with the number of available doses left for each vaccine.
     """
+    # TODO: Implement this.
+    if len(tokens) != 2:
+        print(f"Tokenization failed, except 2 tokens but we got: {tokens}")
+        return None
+    date = tokens[1]
+    if re.findall(r"^\d{4}-\d{2}-\d{2}", date) != 1:
+        print("Don't give that, date of in the formate of YYYY-MM-DD")
+        return None
+    if CURRENT_CAREGIVER is None and CURRENT_PATIENT is None:
+        print("You haven't login, please login to retrieve schedule info. ")
+        return None
+
+
     pass
 
 
 def reserve(tokens):
     """
-    TODO: Part 2
+        TODO: Part 2
     """
+
     pass
 
 
@@ -231,8 +244,9 @@ def upload_availability(tokens):
 
 def cancel(tokens):
     """
-    TODO: Extra Credit
+        TODO: Extra Credit
     """
+
 
     pass
 
@@ -244,12 +258,10 @@ def add_doses(tokens):
     if CURRENT_CAREGIVER is None:
         print("Please login as a caregiver first!")
         return
-
     #  check 2: the length for tokens need to be exactly 3 to include all information (with the operation name)
     if len(tokens) != 3:
         print("Please try again!")
         return
-
     vaccine_name = tokens[1]
     doses = int(tokens[2])
     vaccine = None
@@ -263,7 +275,6 @@ def add_doses(tokens):
         print("Failed to get Vaccine information")
         print("Error:", e)
         return
-
     # if the vaccine is not found in the database, add a new (vaccine, doses) entry.
     # else, update the existing entry by adding the new doses
     if vaccine is None:
@@ -304,7 +315,11 @@ def logout(tokens):
     """
         TODO: Part 2
     """
-    pass
+    global CURRENT_CAREGIVER, CURRENT_PATIENT
+    print(f"Logging ou: {CURRENT_CAREGIVER}")
+    print()
+
+    return
 
 
 def start():
@@ -375,6 +390,7 @@ def Test():
     print("Inserting a new care giver to the system. ")
     create_caregiver(["", "test", "test"])
     return
+
 
 if __name__ == "__main__":
     '''

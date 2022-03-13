@@ -92,6 +92,8 @@ class Caregiver:
     def upload_availability(self, d):
         """
             Insert availability for the caregiver who is currently logged in.
+            Exception:
+                Handled by the caller.
         """
         cm = ConnectionManager()
         conn = cm.create_connection()
@@ -112,4 +114,4 @@ class Caregiver:
         """
             print out an representation of the current instance for the caregiver.
         """
-        return f"instance type: Caregiver, usename: {self.username}"
+        return f"Caregiver: {self.username}"

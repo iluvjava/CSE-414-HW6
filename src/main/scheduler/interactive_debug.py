@@ -7,9 +7,16 @@ import pymssql
 import datetime
 
 import Scheduler
-Scheduler.CURRENT_PATIENT = None
-Scheduler.CURRENT_CAREGIVER = None
-Scheduler.create_patient(["", "test", "test"])
-Scheduler.login_patient(["", "test", "test"])
+
+
+def CreateLoginTestPatientUser():
+    Scheduler.CURRENT_PATIENT = None
+    Scheduler.CURRENT_CAREGIVER = None
+    Scheduler.create_patient(["", "test", "test"])
+    Scheduler.login_patient(["", "test", "test"])
+
+CreateLoginTestPatientUser()
+
+
 
 
