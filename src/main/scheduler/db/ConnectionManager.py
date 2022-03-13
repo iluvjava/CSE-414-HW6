@@ -19,14 +19,22 @@ class ConnectionManager:
                 * Exists the program whenever a database connection error is encountered.
         """
         try:
+            AnyProblem = False
             if self.server_name is None:
                 warnings.warn("SERVER Env Var is None.")
+                AnyProblem = True
             if self.db_name is None:
                 warnings.warn("DBNAME Env Var is None.")
+                AnyProblem = True
             if self.user is None:
                 warnings.warn("USERID Env Var is None.")
+                AnyProblem = True
             if self.password is None:
                 warnings.warn("PASSWORD Env Var is None.")
+                AnyProblem = True
+            if AnyProblem:
+                print("Problems with environmental variables, please make sure they are all capitalized. I added this thing" + \
+                      "so that it's compatible with my system, which is not original present in the original assignment code. ")
 
             self.conn = pymssql.connect(
                 server=self.server_name,
@@ -36,9 +44,9 @@ class ConnectionManager:
                 autocommit=autocommit
             )
         except pymssql.Error as db_err:
-            print("Database Programming Error in SQL connection processing! ")
+            print("Database Programming Error in SQL connection processing! The program will be terminated immediately.")
             print(db_err)
-            quit()
+            quit()  # KILL the program if such an error occurred. Oof might not be a good move but whatever.
         return self.conn
 
     def __enter__(self):

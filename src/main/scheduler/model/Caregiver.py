@@ -57,7 +57,7 @@ class Caregiver:
         return self.username
 
     @property
-    def Username(self):
+    def UserName(self):
         return self.get_username()
 
     def get_salt(self):

@@ -16,8 +16,14 @@ class Appointment:
     CareGiverScheduleExists = "SELECT COUNT(*) AS C FROM Availabilities WHERE Time = %s"
     InsertAppointment = "INSERT INTO Appointments VALUES(%s, %s, %s, %s)"
     GetRandomCaregiver = "SELECT TOP 1 Username FROM Availabilities WHERE Time = %s ORDER BY RAND()"
+    SelectAppointmentsForPatient = \
+        "SELECT id, PatientName, CareGiverName, AppointmentDate, VaccineType FROM Appointments" + \
+        " WHERE PatientName = %s"
+    SelectAppointmentsForCaregiver = \
+        "SELECT id, PatientName, CareGiverName, AppointmentDate, VaccineType FROM Appointments" + \
+        " WHERE CareGiverName = %s"
 
-    def __init__(self, vaccine:str, date:str, appointment_id=None, patient_instance=None, caregiver_instance=None):
+    def __init__(self, vaccine:str=None, date:str=None, appointment_id=None, patient_instance=None, caregiver_instance=None):
         """
             models all some specific appointment.
         """
@@ -60,8 +66,13 @@ class Appointment:
         if self.appointment_id is not None:
             # this is already a validated appointment if this field exists.
             return None
+        if self.vaccine is None or self.date is None:
+            # This is not a specific patient's appointment for validation, skip.
+            return None
         if self.patient_instance is None:
             return "Can't validate appointment for a patience on behave of a caregiver. "
+
+        # A patient has created this appointment object, time to validate it for the patient.
         # ----- Validate date ----------
         if not Util.CheckDateCorrect(self.date):
             return f"The date is incorrect. The date given is: \"{self.date}\""
@@ -118,14 +129,26 @@ class Appointment:
         """
             Returns the query results for an instance of patient. The results will be returned as a list of
             dictionary.
+            Return:
+                The dictionary ready to be printed.
             Exceptions:
                 Responsibility of the callers.
                 * If current patient instance is None, it will raise an exception about it.
         """
-
+        if self.patient_instance is None:
+            raise Exception(
+                "Can't show the appointment for patient because an instance of patience is not passed in "+ \
+                "for the Appointment object instance. "
+            )
+        cm = ConnectionManager()
+        with cm as cursor:
+            cursor.execute(Appointment.SelectAppointmentsForPatient, (self.patient_name,))
+            return list(cursor)
+        # Not sure if this statement get executed at all.
+        print("This print statement runs, I wonder why.")
         return None
 
-    def show_appointment_caregiver(self):
+    def show_appointments_caregiver(self):
         """
             Returns the query results for an instance of caregiver. The results will be returned as a list
             of dictionary.
@@ -133,7 +156,13 @@ class Appointment:
                 Responsibility of the callers:
                 * if current caregiver instance is None, it will rase an exception about it.
         """
-
+        if self.caregiver_name is None:
+            raise Exception("Can't show the appointment for the caregiver because an instance of caregiver is not" +\
+                            " passed in for the appointment instance.")
+        cm = ConnectionManager()
+        with cm as cursor:
+            cursor.execute(Appointment.SelectAppointmentsForCaregiver, (self.caregiver_name, ))
+            return list(cursor)
         return None
 
 

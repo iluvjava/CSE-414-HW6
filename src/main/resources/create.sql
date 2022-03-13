@@ -5,6 +5,7 @@ CREATE TABLE Caregivers (
     PRIMARY KEY (Username)
 );
 
+
 CREATE TABLE Patients(
     Username varchar(255),
     Salt BINARY(16),
@@ -12,17 +13,20 @@ CREATE TABLE Patients(
     PRIMARY KEY (Username)
 );
 
+
 CREATE TABLE Availabilities (
     Time DATE,  -- date is a discrete time point.
     Username varchar(255) REFERENCES Caregivers,
     PRIMARY KEY (Time, Username)
 );
 
+
 CREATE TABLE Vaccines (
-    Name varchar(255), -- Vaccine avaliability doesn't depend on the caregiver.
+    Name varchar(255), -- Vaccine availability doesn't depend on the caregiver.
     Doses int,
     PRIMARY KEY (Name)
 );
+
 
 CREATE TABLE Appointments (
     Id INT NOT NULL IDENTITY(1,1),

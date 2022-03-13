@@ -8,8 +8,8 @@ from util.Util import Util
 from db.ConnectionManager import ConnectionManager
 import pymssql
 import datetime
-import warnings
-import traceback
+
+# import traceback
 import datetime
 
 
@@ -26,6 +26,24 @@ CONST_SELECT_CAREGIVER_USERNAME = "SELECT * FROM Caregivers WHERE Username = %s"
 CONST_GET_ALL_VACCINE = "SELECT * FROM Vaccines"
 CONST_SELECT_CAREGIVER_AVAILABLE_FOR_DATE = "SELECT * FROM Availabilities WHERE Time = %s"
 
+
+class bcolors:  # Enum for text warning.
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
+def warn(message, exception):
+    print(f"{bcolors.WARNING}{message}{bcolors.ENDC}")
+    if exception:
+        print(f"{bcolors.WARNING}{exception}{bcolors.ENDC}")
+    pass
 
 def create_patient(tokens):
     """
@@ -47,12 +65,12 @@ def create_patient(tokens):
         ThePatient.salt, ThePatient.hash = salt, hash
         ThePatient.save_to_db()
     except pymssql.Error as dbe:
-        print(dbe)
-        warnings.warn("Unable to save created patient to the database. ")
+        warn("Unable to save created patient to the database. ", dbe)
         return None
     except Exception as e:
-        traceback.print_exc()
-        warnings.warn("Exception occurred while saving the account created. ")
+        # traceback.print_exc()
+        print(e)
+        warn("Exception occurred while saving the account created. ")
         return None
     print(" *** Patient's Account Registered. ***")
     return
@@ -81,12 +99,12 @@ def create_caregiver(tokens):
     try:
         caregiver.save_to_db()
     except pymssql.Error as e:
-        print("Create caregiver failed, Cannot save")
-        print("Db-Error:", e)
+        warn("Create caregiver failed, Cannot save", e)
         quit()
+        return None
     except Exception as e:
         print("Error:", e)
-        return
+        return None
     print(" *** Account created successfully *** ")
 
 
@@ -104,8 +122,10 @@ def username_exists_caregiver(username):
         print("Error occurred when checking username")
         print("Db-Error:", e)
         quit()
+        return None
     except Exception as e:
         print("Error:", e)
+        return None
     finally:
         cm.close_connection()
     return False
@@ -119,10 +139,11 @@ def login_patient(tokens):
     global CURRENT_PATIENT
     if not(CURRENT_PATIENT is None and CURRENT_PATIENT is None):
         if CURRENT_PATIENT is not None:
-            print(f"Can't login because {CURRENT_PATIENT} is currently logged in. ")
+            print(f"Can't login because {CURRENT_PATIENT} is currently logged in. Please logout first.")
         else:
-            print(f"Can't login because {CURRENT_CAREGIVER} is currently logged in. ")
+            print(f"Can't login because {CURRENT_CAREGIVER} is currently logged in. Please logout first.")
         return None
+
     if len(tokens) != 3:
         print(f"Tokenization failed, expect 3 tokens from the command input, but gotten: \n{tokens}")
     username, password = tokens[1], tokens[2]
@@ -131,12 +152,12 @@ def login_patient(tokens):
         print(f"Current login patient: {username}")
         CURRENT_PATIENT = ThePatient
     except pymssql.Error as e:
-        traceback.print_exc()
-        print("An database error occured when trying to login the patient. ")
+        warn("An database error occurred when trying to login the patient. ", e)
+        quit()
         return None
     except Exception as e:
-        traceback.print_exc()
-        print("Another non database error has occured while processing the login of the patient. ")
+        # traceback.print_exc()
+        warn("Another non database error has occurred while processing the login of the patient. ", e)
         return None
     return None
 
@@ -163,6 +184,7 @@ def login_caregiver(tokens):
         print("Login caregiver failed")
         print("Db-Error:", e)
         quit()
+        return None
     except Exception as e:
         print("Error occurred when logging in. Please try again!")
         print("Error:", e)
@@ -209,12 +231,11 @@ def search_caregiver_schedule(tokens):
             for row in cursor:
                 print(f"{row['Name']}  |  {row['Doses']}")
     except pymssql.Error as sqle:
-        warnings.warn("SQL database exceptions when getting available schedules.")
-        traceback.print_exc()
+        warn("SQL database exceptions when getting available schedules. Below is the Error.", sqle)
+        quit()
         return None
     except Exception as e:
-        traceback.print_exc()
-        warnings.warn("Non SQL database exceptions when getting available schedules.")
+        warn("Non SQL database exceptions when getting available schedules.", e)
         return None
     return None
 
@@ -243,23 +264,21 @@ def reserve(tokens):
             print(ValidationResults)
             return None
     except pymssql.Error as sqle:
-        traceback.print_exc()
-        print("A Database error has occurred when trying to validate the appointment.")
+        warn("A Database error has occurred when trying to validate the appointment.", sqle)
         return None
     except Exception as e:
-        traceback.print_exc()
-        print("A none database has occurred while trying to validate the appointment. ")
+        warn("A none database has occurred while trying to validate the appointment. ", e)
         return None
+
     # Add appointment:
     try:
         TheAppointment.add_appointment()
     except pymssql.Error as sqle:
-        traceback.print_exc()
-        print("A database error has occured while trying to add the current appointment. ")
+        warn("A database error has occured while trying to add the current appointment. ", sqle)
+        quit()
         return None
     except Exception as e:
-        traceback.print_exc()
-        print("A non database error has occured while trying to add the current appointment. ")
+        warn("A non database error has occured while trying to add the current appointment. ", e)
         return None
     print("***** Appointment Added ******")
     return None
@@ -376,19 +395,57 @@ def show_appointments(tokens):
             you should print the appointment ID, vaccine name, date, and patient name.
         * if the user is a patient then:
             For patients, you should print the appointment ID, vaccine name, date, and caregiver name.
-        TODO: Part 2
+        TODO: TEST IT.
     """
-
-    pass
+    if CURRENT_PATIENT is None and CURRENT_CAREGIVER is None:
+        print("Please at least loging as a caregiver, or a patient to executed this command. ")
+    if len(tokens) > 1:
+        print(f"Extra string after the commands are ignored. {tokens[1:]} are ignored. ")
+    App = Appointment(patient_instance=CURRENT_PATIENT, caregiver_instance=CURRENT_CAREGIVER)
+    if CURRENT_CAREGIVER is None:
+        try:
+            Results = App.show_appointments_patient()
+            print("Appointment ID  | Caregiver Name  | Date  | Vaccine")
+            for row in Results:
+                print(f"{row['id']}  | {row['CareGiverName']}  | {row['AppointmentDate']}  | {row['VaccineType']}")
+            return None
+        except pymssql.Error as sqle:
+            warn("A database error occurred while trying to show list of appointment for a patient. ", sqle)
+            quit()
+            return None
+        except Exception as e:
+            warn("A non database error as occured while trying to show a list of appointment for a patient. ", e)
+            return None
+    else:
+        try:
+            Results = App.show_appointments_caregiver()
+            print("Appointment ID  | Patient Name  | Date   | Vaccine")
+            for row in Results:
+                print(f"{row['id']}  | {row['PatientName']}  | {row['AppointmentDate']}  | {row['VaccineType']}")
+        except pymssql.Error as sqle:
+            warn("A database error occurred while trying to show list of appointment for a caregiver. ", sqle)
+            quit()
+            return None
+        except Exception as e:
+            warn("A non database error as occurred while trying to show a list of appointment for a caregiver. ", e)
+            return None
+    return None
 
 
 def logout(tokens):
     """
         TODO: Part 2
     """
+
     global CURRENT_CAREGIVER, CURRENT_PATIENT
-    print(f"Logging out: {CURRENT_CAREGIVER}")
-    print()
+    if not (CURRENT_PATIENT is None and CURRENT_CAREGIVER is None):
+        print(f"Logging out: {CURRENT_CAREGIVER}")
+        print(f"Logging out: {CURRENT_PATIENT}")
+        CURRENT_PATIENT = None
+        CURRENT_CAREGIVER = None
+    else:
+        print("No account is currently login, so logout does nothing. ")
+
     return None
 
 
@@ -397,17 +454,17 @@ def start():
     while not stop:
         print()
         print(" *** Please enter one of the following commands *** ")
-        print("> create_patient <username> <password>")  # TODO: implement create_patient (Part 1)
+        print("> create_patient <username> <password>")  # DONE: implement create_patient (Part 1)
         print("> create_caregiver <username> <password>")
-        print("> login_patient <username> <password>")  # TODO: implement login_patient (Part 1)
+        print("> login_patient <username> <password>")  # DONE: implement login_patient (Part 1)
         print("> login_caregiver <username> <password>")
-        print("> search_caregiver_schedule <date>")  # TODO: implement search_caregiver_schedule (Part 2)
-        print("> reserve <date> <vaccine>") # TODO: implement reserve (Part 2)
+        print("> search_caregiver_schedule <date>")  # DONE: implement search_caregiver_schedule (Part 2)
+        print("> reserve <date> <vaccine>") # DONE: implement reserve (Part 2)
         print("> upload_availability <date>")
         print("> cancel <appointment_id>") # TODO: implement cancel (extra credit)
         print("> add_doses <vaccine> <number>")
         print("> show_appointments")  # TODO: implement show_appointments (Part 2)
-        print("> logout") # TODO: implement logout (Part 2)
+        print("> logout") # DONE: implement logout (Part 2)
         print("> Quit")
         print()
         response = ""
@@ -452,7 +509,6 @@ def start():
             stop = True
         else:
             print("Invalid Argument")
-
 
 
 def Test():

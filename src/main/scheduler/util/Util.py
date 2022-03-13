@@ -25,6 +25,8 @@ class Util:
             Check if a current string is a correct date that can be parsed by the
             date time objective in python.
         """
+        if date_string is None:
+            return False
         DateStringLst = date_string.split("-")
         if len(DateStringLst) != 3:
             return False
