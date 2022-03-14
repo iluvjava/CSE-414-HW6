@@ -9,9 +9,6 @@ from db.ConnectionManager import ConnectionManager
 import pymssql
 import datetime
 
-# import traceback
-import datetime
-
 
 '''
 objects to keep track of the currently logged-in user
@@ -55,6 +52,10 @@ def create_patient(tokens):
         return  # wrong number of token
     username = tokens[1]
     password = tokens[2]
+    if Util.CheckIfGoodPassword(password) is not None:
+        print(Util.CheckIfGoodPassword(password))
+        print(f"The password you give in is: {password}")
+        return None
     ThePatient = Patient(username, password=password)
     try:
         if ThePatient.exists_in_db():
@@ -87,6 +88,9 @@ def create_caregiver(tokens):
         return
     username = tokens[1]
     password = tokens[2]
+    if Util.CheckIfGoodPassword(password) is not None:
+        print(Util.CheckIfGoodPassword(password))
+        return None
     # check 2: check if the username has been taken already
     if username_exists_caregiver(username):
         print("Username taken, try again!")
@@ -476,11 +480,13 @@ def start():
             print("Type in a valid argument")
             break
 
-        response = response.lower()
         tokens = response.split(" ")
+        tokens[0] = tokens[0].lower()
+
         if len(tokens) == 0:
             ValueError("Try Again")
             continue
+
         operation = tokens[0]
         if operation == "create_patient":
             create_patient(tokens)

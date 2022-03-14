@@ -41,8 +41,28 @@ class Util:
         return None
 
     @staticmethod
-    def CheckDataIsThePast():
+    def CheckIfGoodPassword(password:str):
         """
-
+            Given a string, function checks whether the password satisfy the following standard:
+            1. At least 8 characters.
+            2. A mixture of both uppercase and lowercase letters.
+            3. A mixture of letters and numbers.
+            4. Inclusion of at least one special character, from “!”, “@”, “#”, “?”.
+            Returns:
+                None if everything is good. A message if any of the password criteria is not satisfied.
         """
-        pass
+        if len(password) < 8:
+            return "Password Length should be at least 8 characters long."
+        # password is at least 8 letter long
+        if all([ord('a') > ord(l) > ord('z') for l in password.lower()]):
+            return "Password should at least contain some letters in it. "
+        # password is at least 8 letters long and contain at least one letter
+        if password.upper() == password or password.lower() == password:
+            return "Password must contain a mixture of both upper and lower case letter. "
+        # password is at least 8 letters long and contain at least one upper and lower case letter
+        if len(set("1234567890").intersection(set(password))) == 0:
+            return "Password must contain a mixture of both letters and numbers"
+        # password is at least 8 letters long and contain at least one upper and lower case letter and some digits.
+        if len(set("!@#?").intersection(set(password))) == 0:
+            return "Password must include at least one of the characters from “!”, “@”, “#”, “?”. "
+        return None
